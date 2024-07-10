@@ -1,8 +1,27 @@
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
-const SecondaryDraw = () => {
+/////
+import useAxiosWithInterceptor from "../../helpers/jwtinterceptor";
+/////
+
+type SecondaryDrawProps = {
+  children: React.ReactNode;
+};
+
+const SecondaryDraw = ({ children }: SecondaryDrawProps) => {
   const theme = useTheme();
+  const jwtAxios = useAxiosWithInterceptor();
+
+  jwtAxios
+    .get("http://localhost:8000/api/server/select/?category=cat1")
+    .then((response) => {
+      console.log(response.data);
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+
   return (
     <Box
       sx={{
@@ -17,11 +36,7 @@ const SecondaryDraw = () => {
         overflow: "auto",
       }}
     >
-      {[...Array(50)].map((_, i) => (
-        <Typography key={i} paragraph>
-          {i + 1}
-        </Typography>
-      ))}
+      {children}
     </Box>
   );
 };

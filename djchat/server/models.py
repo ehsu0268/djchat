@@ -30,6 +30,7 @@ class Category(models.Model):
             if existing.icon != self.icon:
                 # prevent model from saved
                 existing.icon.delete(save=False)
+        self.name = self.name.lower()
         super(Category, self).save(*args, **kwargs)
 
     @receiver(models.signals.pre_delete, sender="server.Category")
@@ -56,20 +57,6 @@ class Server(models.Model):
     description = models.CharField(max_length=250, blank=True, null=True)
     # one server can have multiple members
     member = models.ManyToManyField(settings.AUTH_USER_MODEL)
-
-    def __str__(self):
-        return f"{self.name}-{self.id}"
-
-
-class Channel(models.Model):
-    name = models.CharField(max_length=100)
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="channel_owner"
-    )
-    topic = models.CharField(max_length=100)
-    server = models.ForeignKey(
-        Server, on_delete=models.CASCADE, related_name="channel_server"
-    )
     banner = models.ImageField(
         upload_to=server_banner_upload_path,
         null=True,
@@ -86,22 +73,36 @@ class Channel(models.Model):
     def save(self, *args, **kwargs):
         if self.id:
             # category exists
-            existing = get_object_or_404(Category, id=self.id)
+            existing = get_object_or_404(Server, id=self.id)
             # compare uploaded with existing
             if existing.icon != self.icon:
                 # prevent model from saved
                 existing.icon.delete(save=False)
             if existing.banner != self.banner:
                 existing.banner.delete(save=False)
-        super(Category, self).save(*args, **kwargs)
+        super(Server, self).save(*args, **kwargs)
 
     @receiver(models.signals.pre_delete, sender="server.Server")
-    def category_delete_files(sender, instance, **kwargs):
+    def server_delete_files(sender, instance, **kwargs):
         for field in instance._meta.fields:
             if field.name == "icon" or field.name == "banner":
                 file = getattr(instance, field.name)
                 if file:
                     file.delete(save=False)
+
+    def __str__(self):
+        return f"{self.name}-{self.id}"
+
+
+class Channel(models.Model):
+    name = models.CharField(max_length=100)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="channel_owner"
+    )
+    topic = models.CharField(max_length=100)
+    server = models.ForeignKey(
+        Server, on_delete=models.CASCADE, related_name="channel_server"
+    )
 
     def __str__(self):
         return self.name
