@@ -4,7 +4,7 @@ import { useState } from "react";
 
 interface IuseCrud<T> {
   dataCRUD: T[];
-  fetchData: () => Promise<void>;
+  fetchData: () => Promise<T[]>;
   error: Error | null;
   isLoading: boolean;
 }
@@ -21,6 +21,7 @@ const useCrud = <T>(initialData: T[], apiURL: string): IuseCrud<T> => {
     try {
       const response = await jwtAxios.get(`${BASE_URL}${apiURL}`, {});
       const data = response.data;
+      console.log(data);
       setDataCRUD(data);
       setError(null);
       setIsLoading(false);
