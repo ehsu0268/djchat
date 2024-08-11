@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import useWebSocket from "react-use-websocket";
+//import useWebSocket from "react-use-websocket";
 import useCrud from "../../hooks/useCrud";
 import { Server } from "../../@types/server.d";
+import { useAuthService } from "../../services/AuthServices";
 import {
   Avatar,
   Box,
@@ -16,6 +17,7 @@ import {
 } from "@mui/material";
 import MessageInterfaceChannels from "./MessageInterfaceChannels";
 import Scroll from "./Scroll";
+import useChatWebSocket from "../../services/chatService";
 
 interface SendMessageData {
   type: string;
@@ -36,41 +38,12 @@ interface Message {
 const messageInterface = (props: ServerChannelProps) => {
   const { data } = props;
   const theme = useTheme();
-  const [newMessage, setNewMessage] = useState<Message[]>([]);
-  const [message, setMessage] = useState("");
   const { serverId, channelId } = useParams();
-  const server_name = data?.[0]?.name ?? "Server";
-  const { dataCRUD, error, isLoading, fetchData } = useCrud<Message>(
-    [],
-    `/messages/?channel_id=${channelId}`
+  const { newMessage, message, setMessage, sendJsonMessage } = useChatWebSocket(
+    channelId || "",
+    serverId || ""
   );
-
-  const socketUrl = channelId
-    ? `ws://127.0.0.1:8000/${serverId}/${channelId}`
-    : null;
-
-  const { sendJsonMessage } = useWebSocket(socketUrl, {
-    onOpen: async () => {
-      try {
-        const data = await fetchData();
-        setNewMessage(Array.isArray(data) ? data : []);
-        console.log("Connected!!!");
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    onClose: () => {
-      console.log("Closed!");
-    },
-    onError: () => {
-      console.log("Error!");
-    },
-    onMessage: (msg) => {
-      const data = JSON.parse(msg.data);
-      setNewMessage((prev_msg) => [...prev_msg, data.new_message]);
-      setMessage("");
-    },
-  });
+  const server_name = data?.[0]?.name ?? "Server";
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
